@@ -28,7 +28,11 @@ async function run() {
 
   try {
 
-   
+    app.get('/tools', async (req, res) => {
+      const query = {};
+      const result = await toolCollections.find(query).toArray();
+      res.send(result);
+    });
   }
   finally{
 
