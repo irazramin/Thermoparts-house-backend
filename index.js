@@ -19,11 +19,12 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
-console.log(client)
 
 async function run() {
   client.connect();
   const toolCollections = client.db('toolsDb').collection('toolCollection');
+  const userCollections = client.db('toolsDb').collection('userCollection');
+  const orderCollections = client.db('toolsDb').collection('orderCollection');
 
 
   try {
@@ -33,6 +34,35 @@ async function run() {
       const result = await toolCollections.find(query).toArray();
       res.send(result);
     });
+    app.get('/tools/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = {_id:ObjectId(id)};
+      const result = await toolCollections.findOne(query);
+      res.send(result);
+    });
+
+    app.put('/user/:email',async(req,res) =>{
+        const email = req.params.email;
+        const user = req.body;
+        const filter = {email:email};
+        const updateDoc = {
+          $set:user,
+        }
+        const option = {upsert:true};
+       
+        const result = await userCollections.updateOne(filter,updateDoc,option);
+        const token = jwt.sign(user, process.env.ACCESS_TOKEN,{
+          expiresIn:'1h'
+        });
+
+        res.send({result,accessToken:token});
+    });
+
+    app.post('/order',async(req,res) =>{
+      const order = req.body;
+      const result = await orderCollections.insertOne(order);
+      res.send({result,success:true});
+    })
   }
   finally{
 
