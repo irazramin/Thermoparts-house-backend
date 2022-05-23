@@ -133,6 +133,11 @@ async function run() {
       const result = await reviewCollections.insertOne(review);
       res.send(result);
     })
+    app.get('/review',verifyJwt, async(req,res) =>{
+     const query = {};
+      const result = await reviewCollections.find(query).toArray();
+      res.send(result);
+    })
   } finally {
   }
 }
