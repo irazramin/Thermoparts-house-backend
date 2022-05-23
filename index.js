@@ -43,6 +43,21 @@ async function run() {
 
   try {
 
+
+     const verifyAdmin = async (req, res, next) => {
+      const requester = req.decoded.email;
+      const requesterAccount = await userCollections.findOne({
+        email: requester,
+      });
+      if (requesterAccount.role === 'admin') {
+        next();
+      }
+      else {
+        res.status(403).send({ message: 'forbidden' });
+      }
+    }
+
+
     app.post('/create-payment-intent',async(req,res) =>{
       const product = req.body;
       const price= product.totalAmount;
@@ -83,40 +98,50 @@ async function run() {
     });
 
 
-    app.get('/available',async(req,res) =>{
-      const query = {};
-      const tools = await toolCollections.find().toArray();
-      const orderProducts = await orderCollections.find({}).toArray();
+    // app.get('/available',async(req,res) =>{
+    //   const query = {};
+    //   const tools = await toolCollections.find().toArray();
+    //   const orderProducts = await orderCollections.find({}).toArray();
 
-      tools.forEach(tool =>{
-        const sameOrderProduct = orderProducts.filter(product => product._id === tool._id);
-        const productQuantity = sameOrderProduct.map(product => product.quantity);
-        const initialValue = 0;
-        const totalQuantity = productQuantity.reduce(
-          (previousValue, currentValue) => previousValue + currentValue,
-          initialValue
-        );
+    //   tools.forEach(tool =>{
+    //     const sameOrderProduct = orderProducts.filter(product => product._id === tool._id);
+    //     const productQuantity = sameOrderProduct.map(product => product.quantity);
+    //     const initialValue = 0;
+    //     const totalQuantity = productQuantity.reduce(
+    //       (previousValue, currentValue) => previousValue + currentValue,
+    //       initialValue
+    //     );
 
-        tool.available = tool.available - totalQuantity;
-        res.send(tools);
-      })
+    //     tool.available = tool.available - totalQuantity;
+    //     res.send(tools);
+    //   })
 
-    })
+    // })
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email;
       const user = req.body;
       const filter = { email: email };
+      const option = { upsert: true };
+
       const updateDoc = {
         $set: user,
       };
-
-      const result = await userCollections.updateOne(filter, updateDoc);
+      const result = await userCollections.updateOne(filter, updateDoc,option);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
         expiresIn: '2d',
       });
 
       res.send({ result, accessToken: token });
     });
+
+    app.get('/admin/:email', async(req,res) =>{
+      const email = req.params.email;
+      const query = {email}
+      const result = await userCollections.findOne(query);
+      const isAdmin = result.role === 'admin'
+      
+      res.send({admin:isAdmin})
+    })
 
     app.post('/order', async (req, res) => {
       const order = req.body;
@@ -129,7 +154,6 @@ async function run() {
       
       tools.available = tools.available - quantity;
       const available = tools.available
-      console.log(tools.available,available,quantity,tools)
       res.send({ result, success: true,available:available });
     });
 
