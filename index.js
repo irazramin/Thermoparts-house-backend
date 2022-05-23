@@ -38,6 +38,7 @@ async function run() {
   const toolCollections = client.db('toolsDb').collection('toolCollection');
   const userCollections = client.db('toolsDb').collection('userCollection');
   const orderCollections = client.db('toolsDb').collection('orderCollection');
+  const reviewCollections = client.db('toolsDb').collection('reviewCollection');
 
   try {
 
@@ -125,6 +126,12 @@ async function run() {
         const filter = {_id:ObjectId(id)};
         const result = await orderCollections.deleteOne(filter);
         res.send(result);
+    })
+
+    app.post('/review',async(req,res) =>{
+      const review = req.body;
+      const result = await reviewCollections.insertOne(review);
+      res.send(result);
     })
   } finally {
   }
