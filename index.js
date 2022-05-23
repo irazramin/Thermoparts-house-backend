@@ -105,7 +105,22 @@ async function run() {
       res.send(result);
     });
 
- 
+    app.patch('/order/payment/:id',async(req,res) =>{
+      const id = req.params.id;
+      const payment = req.body;
+      console.log(payment)
+      const filter = {_id:ObjectId(id)};
+      const updateDoc = {
+        $set :{
+          paid:payment.paid,
+          transactionId : payment.transactionId
+        }
+      }
+      const updateOrder = await orderCollections.updateOne(filter,updateDoc);
+      res.send(updateOrder);
+    });
+
+
   } finally {
   }
 }
