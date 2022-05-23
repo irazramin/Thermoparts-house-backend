@@ -68,7 +68,39 @@ async function run() {
       const result = await toolCollections.findOne(query);
       res.send(result);
     });
+    app.patch('/tools/:id', async (req, res) => {
+     const id = req.params.id;
+      const available = req.body;
+      const filter = {_id:ObjectId(id)};
+      const updateDoc = {
+        $set :{
+          available:available.available
+        }
+      }
+      const updateOrder = await toolCollections.updateOne(filter,updateDoc);
+      res.send(updateOrder);
+    });
 
+
+    app.get('/available',async(req,res) =>{
+      const query = {};
+      const tools = await toolCollections.find().toArray();
+      const orderProducts = await orderCollections.find({}).toArray();
+
+      tools.forEach(tool =>{
+        const sameOrderProduct = orderProducts.filter(product => product._id === tool._id);
+        const productQuantity = sameOrderProduct.map(product => product.quantity);
+        const initialValue = 0;
+        const totalQuantity = productQuantity.reduce(
+          (previousValue, currentValue) => previousValue + currentValue,
+          initialValue
+        );
+
+        tool.available = tool.available - totalQuantity;
+        res.send(tools);
+      })
+
+    })
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -80,7 +112,7 @@ async function run() {
 
       const result = await userCollections.updateOne(filter, updateDoc, option);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
-        expiresIn: '1h',
+        expiresIn: '2d',
       });
 
       res.send({ result, accessToken: token });
@@ -88,8 +120,17 @@ async function run() {
 
     app.post('/order', async (req, res) => {
       const order = req.body;
+      const id = order._id;
+      const quantity = order.quantity;
+      const query = {id};
+
+      const tools = await toolCollections.findOne(query);
       const result = await orderCollections.insertOne(order);
-      res.send({ result, success: true });
+      
+      tools.available = tools.available - quantity;
+      const available = tools.available
+      console.log(tools.available,available,quantity,tools)
+      res.send({ result, success: true,available:available });
     });
 
     app.get('/order/:email',verifyJwt, async (req, res) => {
@@ -109,7 +150,6 @@ async function run() {
     app.patch('/order/payment/:id',async(req,res) =>{
       const id = req.params.id;
       const payment = req.body;
-      console.log(payment)
       const filter = {_id:ObjectId(id)};
       const updateDoc = {
         $set :{
@@ -117,8 +157,8 @@ async function run() {
           transactionId : payment.transactionId
         }
       }
-      const updateOrder = await orderCollections.updateOne(filter,updateDoc);
-      res.send(updateOrder);
+      const updateAvailableQuantity= await orderCollections.updateOne(filter,updateDoc);
+      res.send(updateAvailableQuantity);
     });
 
     app.delete('/order/payment/:id', async(req,res) =>{
