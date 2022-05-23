@@ -39,6 +39,7 @@ async function run() {
   const userCollections = client.db('toolsDb').collection('userCollection');
   const orderCollections = client.db('toolsDb').collection('orderCollection');
   const reviewCollections = client.db('toolsDb').collection('reviewCollection');
+  const userProfileCollections = client.db('toolsDb').collection('userProfileCollection');
 
   try {
 
@@ -108,9 +109,8 @@ async function run() {
       const updateDoc = {
         $set: user,
       };
-      const option = { upsert: true };
 
-      const result = await userCollections.updateOne(filter, updateDoc, option);
+      const result = await userCollections.updateOne(filter, updateDoc);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
         expiresIn: '2d',
       });
@@ -176,6 +176,28 @@ async function run() {
     app.get('/review',verifyJwt, async(req,res) =>{
      const query = {};
       const result = await reviewCollections.find(query).toArray();
+      res.send(result);
+    });
+
+
+    app.put('/userprofile/:email',async(req,res) =>{
+      const email = req.params.email;
+      const profile =req.body;
+      const option = {upsert:true};
+      const filter = {email}
+      const doc = {
+        $set:{
+            firstName:profile.fName,
+            lastName:profile.lName,
+            email:profile.email,
+            location:profile.location,
+            phone:profile.phone,
+            education:profile.education,
+            linkedin:profile.linkedin,
+            github:profile.github,
+        }
+      }
+      const result = await userProfileCollections.updateOne(filter,doc,option);
       res.send(result);
     })
   } finally {
