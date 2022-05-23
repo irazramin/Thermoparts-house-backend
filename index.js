@@ -63,7 +63,7 @@ async function run() {
       const result = await toolCollections.find(query).toArray();
       res.send(result);
     });
-    app.get('/tools/:id', async (req, res) => {
+    app.get('/tools/:id', verifyJwt, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await toolCollections.findOne(query);
@@ -183,7 +183,7 @@ async function run() {
     app.put('/userprofile/:email',async(req,res) =>{
       const email = req.params.email;
       const profile =req.body;
-      const option = {upsert:true};
+      const option = {upsert:true}
       const filter = {email}
       const doc = {
         $set:{
@@ -199,7 +199,21 @@ async function run() {
       }
       const result = await userProfileCollections.updateOne(filter,doc,option);
       res.send(result);
-    })
+    });
+
+    app.get('/userprofile/:email', async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const result = await userProfileCollections.findOne(query);
+      res.send(result);
+    });
+
+       app.get('/userprofile/:email', async(req,res) =>{
+     const query = {};
+      const result = await reviewCollections.find(query).toArray();
+      res.send(result);
+    });
+
   } finally {
   }
 }
