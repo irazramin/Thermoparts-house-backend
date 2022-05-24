@@ -75,13 +75,11 @@ async function run() {
       res.send(result);
     });
 
-
     app.post('/tools', async (req, res) => {
       const product = req.body;
       const result = await toolCollections.insertOne(product);
       res.send(result);
     });
-
 
     app.get('/tools/:id', verifyJwt, async (req, res) => {
       const id = req.params.id;
@@ -119,33 +117,6 @@ async function run() {
       res.send({ result, accessToken: token });
     });
 
-    app.get('/admin/:email', async (req, res) => {
-      const email = req.params.email;
-      const query = { email };
-      const result = await userCollections.findOne(query);
-      const isAdmin = result?.role === 'admin';
-      res.send({ admin: isAdmin });
-    });
-
-    app.get('/admin/users/details', verifyJwt, async (req, res) => {
-      const query = {};
-      const result = await userCollections.find(query).toArray();
-      res.send(result);
-    });
-
-    app.put('/admin/users/makeadmin/:id', async (req, res) => {
-      const id = req.params.id;
-      const filter = {_id:ObjectId(id)};
-      const option = { upsert: true };
-      const updateDoc = {
-        $set: {
-          role: 'admin',
-        },
-      };
-      const result = await userCollections.updateOne(filter, updateDoc, option);
-      res.send(result);
-    });
-
     app.post('/order', async (req, res) => {
       const order = req.body;
       const id = order._id;
@@ -160,19 +131,12 @@ async function run() {
       res.send({ result, success: true, available: available });
     });
 
-    app.get('/admin/order/allorder', verifyJwt, async (req, res) => {
-      const query = {};
-      const result = await orderCollections.find(query).toArray();
-      res.send(result);
-    });
     app.get('/order/:email', verifyJwt, async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const result = await orderCollections.find(query).toArray();
       res.send(result);
     });
-
-
 
     app.get('/order/payment/:id', verifyJwt, async (req, res) => {
       const id = req.params.id;
@@ -205,6 +169,52 @@ async function run() {
       res.send(result);
     });
 
+    app.get('/admin/tools/allproducts', verifyJwt, async (req, res) => {
+      const query = {};
+      const result = await toolCollections.find(query).toArray();
+      res.send(result);
+    });
+
+    app.get('/admin/order/allorder', verifyJwt, async (req, res) => {
+      const query = {};
+      const result = await orderCollections.find(query).toArray();
+      res.send(result);
+    });
+
+    
+    app.put('/admin/users/makeadmin/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const option = { upsert: true };
+      const updateDoc = {
+        $set: {
+          role: 'admin',
+        },
+      };
+      const result = await userCollections.updateOne(filter, updateDoc, option);
+      res.send(result);
+    });
+
+      app.get('/admin/:email', async (req, res) => {
+        const email = req.params.email;
+        const query = { email };
+        const result = await userCollections.findOne(query);
+        const isAdmin = result?.role === 'admin';
+        res.send({ admin: isAdmin });
+      });
+
+      app.get('/admin/users/details', verifyJwt, async (req, res) => {
+        const query = {};
+        const result = await userCollections.find(query).toArray();
+        res.send(result);
+      });
+
+      app.delete('/admin/product/allproduct/:id', async(req,res) =>{
+          const id = req.params.id;
+          const filter = { _id: ObjectId(id) };
+          const result = await toolCollections.deleteOne(filter);
+          res.send(result);
+      })
 
     app.delete('/order/payment/:id', async (req, res) => {
       const id = req.params.id;
