@@ -138,9 +138,14 @@ async function run() {
       const email = req.params.email;
       const query = {email}
       const result = await userCollections.findOne(query);
-      const isAdmin = result.role === 'admin'
-      
+      const isAdmin = result?.role === 'admin'
       res.send({admin:isAdmin})
+    })
+
+    app.get('/admin/users/details', verifyJwt, async(req,res) =>{
+      const query = {}
+      const result = await userCollections.find(query).toArray();
+      res.send(result)
     })
 
     app.post('/order', async (req, res) => {
