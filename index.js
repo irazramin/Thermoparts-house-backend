@@ -39,45 +39,50 @@ async function run() {
   const userCollections = client.db('toolsDb').collection('userCollection');
   const orderCollections = client.db('toolsDb').collection('orderCollection');
   const reviewCollections = client.db('toolsDb').collection('reviewCollection');
-  const userProfileCollections = client.db('toolsDb').collection('userProfileCollection');
+  const userProfileCollections = client
+    .db('toolsDb')
+    .collection('userProfileCollection');
 
   try {
-
-
-     const verifyAdmin = async (req, res, next) => {
+    const verifyAdmin = async (req, res, next) => {
       const requester = req.decoded.email;
       const requesterAccount = await userCollections.findOne({
         email: requester,
       });
       if (requesterAccount.role === 'admin') {
         next();
-      }
-      else {
+      } else {
         res.status(403).send({ message: 'forbidden' });
       }
-    }
+    };
 
-
-    app.post('/create-payment-intent',async(req,res) =>{
+    app.post('/create-payment-intent', async (req, res) => {
       const product = req.body;
-      const price= product.totalAmount;
-      const amount = price*100;
+      const price = product.totalAmount;
+      const amount = price * 100;
 
       const paymentIntent = await stripe.paymentIntents.create({
-        amount:amount,
-        currency:"usd",
-        payment_method_types:["card"]
+        amount: amount,
+        currency: 'usd',
+        payment_method_types: ['card'],
       });
       res.send({ clientSecret: paymentIntent.client_secret });
-    })
-
-
+    });
 
     app.get('/tools', async (req, res) => {
       const query = {};
       const result = await toolCollections.find(query).toArray();
       res.send(result);
     });
+
+
+    app.post('/tools', async (req, res) => {
+      const product = req.body;
+      const result = await toolCollections.insertOne(product);
+      res.send(result);
+    });
+
+
     app.get('/tools/:id', verifyJwt, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
@@ -85,38 +90,18 @@ async function run() {
       res.send(result);
     });
     app.patch('/tools/:id', async (req, res) => {
-     const id = req.params.id;
+      const id = req.params.id;
       const available = req.body;
-      const filter = {_id:ObjectId(id)};
+      const filter = { _id: ObjectId(id) };
       const updateDoc = {
-        $set :{
-          available:available.available
-        }
-      }
-      const updateOrder = await toolCollections.updateOne(filter,updateDoc);
+        $set: {
+          available: available.available,
+        },
+      };
+      const updateOrder = await toolCollections.updateOne(filter, updateDoc);
       res.send(updateOrder);
     });
 
-
-    // app.get('/available',async(req,res) =>{
-    //   const query = {};
-    //   const tools = await toolCollections.find().toArray();
-    //   const orderProducts = await orderCollections.find({}).toArray();
-
-    //   tools.forEach(tool =>{
-    //     const sameOrderProduct = orderProducts.filter(product => product._id === tool._id);
-    //     const productQuantity = sameOrderProduct.map(product => product.quantity);
-    //     const initialValue = 0;
-    //     const totalQuantity = productQuantity.reduce(
-    //       (previousValue, currentValue) => previousValue + currentValue,
-    //       initialValue
-    //     );
-
-    //     tool.available = tool.available - totalQuantity;
-    //     res.send(tools);
-    //   })
-
-    // })
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -126,7 +111,7 @@ async function run() {
       const updateDoc = {
         $set: user,
       };
-      const result = await userCollections.updateOne(filter, updateDoc,option);
+      const result = await userCollections.updateOne(filter, updateDoc, option);
       const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
         expiresIn: '2d',
       });
@@ -134,99 +119,119 @@ async function run() {
       res.send({ result, accessToken: token });
     });
 
-    app.get('/admin/:email', async(req,res) =>{
+    app.get('/admin/:email', async (req, res) => {
       const email = req.params.email;
-      const query = {email}
+      const query = { email };
       const result = await userCollections.findOne(query);
-      const isAdmin = result?.role === 'admin'
-      res.send({admin:isAdmin})
-    })
+      const isAdmin = result?.role === 'admin';
+      res.send({ admin: isAdmin });
+    });
 
-    app.get('/admin/users/details', verifyJwt, async(req,res) =>{
-      const query = {}
+    app.get('/admin/users/details', verifyJwt, async (req, res) => {
+      const query = {};
       const result = await userCollections.find(query).toArray();
-      res.send(result)
-    })
+      res.send(result);
+    });
+
+    app.put('/admin/users/makeadmin/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = {_id:ObjectId(id)};
+      const option = { upsert: true };
+      const updateDoc = {
+        $set: {
+          role: 'admin',
+        },
+      };
+      const result = await userCollections.updateOne(filter, updateDoc, option);
+      res.send(result);
+    });
 
     app.post('/order', async (req, res) => {
       const order = req.body;
       const id = order._id;
       const quantity = order.quantity;
-      const query = {id};
+      const query = { id };
 
       const tools = await toolCollections.findOne(query);
       const result = await orderCollections.insertOne(order);
-      
+
       tools.available = tools.available - quantity;
-      const available = tools.available
-      res.send({ result, success: true,available:available });
+      const available = tools.available;
+      res.send({ result, success: true, available: available });
     });
 
-    app.get('/order/:email',verifyJwt, async (req, res) => {
+    app.get('/order/:email', verifyJwt, async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const result = await orderCollections.find(query).toArray();
       res.send(result);
     });
 
-    app.get('/order/payment/:id',verifyJwt, async(req,res) =>{
+    app.get('/order/payment/:id', verifyJwt, async (req, res) => {
       const id = req.params.id;
-      const query = {_id:ObjectId(id)}
+      const query = { _id: ObjectId(id) };
       const result = await orderCollections.findOne(query);
       res.send(result);
     });
 
-    app.patch('/order/payment/:id',async(req,res) =>{
+    app.patch('/order/payment/:id', async (req, res) => {
       const id = req.params.id;
       const payment = req.body;
-      const filter = {_id:ObjectId(id)};
+      const filter = { _id: ObjectId(id) };
       const updateDoc = {
-        $set :{
-          paid:payment.paid,
-          transactionId : payment.transactionId
-        }
-      }
-      const updateAvailableQuantity= await orderCollections.updateOne(filter,updateDoc);
+        $set: {
+          paid: payment.paid,
+          transactionId: payment.transactionId,
+        },
+      };
+      const updateAvailableQuantity = await orderCollections.updateOne(
+        filter,
+        updateDoc
+      );
       res.send(updateAvailableQuantity);
     });
 
-    app.delete('/order/payment/:id', async(req,res) =>{
-        const id = req.params.id;
-        const filter = {_id:ObjectId(id)};
-        const result = await orderCollections.deleteOne(filter);
-        res.send(result);
-    })
+    app.delete('/order/payment/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await orderCollections.deleteOne(filter);
+      res.send(result);
+    });
 
-    app.post('/review',async(req,res) =>{
+    app.post('/review', async (req, res) => {
       const review = req.body;
       const result = await reviewCollections.insertOne(review);
       res.send(result);
-    })
-    app.get('/review',verifyJwt, async(req,res) =>{
-     const query = {};
+    });
+
+    app.get('/review', async (req, res) => {
+      const query = {};
       const result = await reviewCollections.find(query).toArray();
       res.send(result);
     });
 
-
-    app.put('/userprofile/:email',async(req,res) =>{
+    app.put('/userprofile/:email', async (req, res) => {
       const email = req.params.email;
-      const profile =req.body;
-      const option = {upsert:true}
-      const filter = {email}
+      const profile = req.body;
+      const option = { upsert: true };
+      const filter = { email };
       const doc = {
-        $set:{
-            firstName:profile.fName,
-            lastName:profile.lName,
-            email:profile.email,
-            location:profile.location,
-            phone:profile.phone,
-            education:profile.education,
-            linkedin:profile.linkedin,
-            github:profile.github,
-        }
-      }
-      const result = await userProfileCollections.updateOne(filter,doc,option);
+        $set: {
+          firstName: profile.fName,
+          lastName: profile.lName,
+          email: profile.email,
+          location: profile.location,
+          phone: profile.phone,
+          education: profile.education,
+          linkedin: profile.linkedin,
+          github: profile.github,
+        },
+      };
+      const result = await userProfileCollections.updateOne(
+        filter,
+        doc,
+        option
+      );
       res.send(result);
     });
 
@@ -237,12 +242,11 @@ async function run() {
       res.send(result);
     });
 
-       app.get('/userprofile/:email', async(req,res) =>{
-     const query = {};
+    app.get('/userprofile/:email', async (req, res) => {
+      const query = {};
       const result = await reviewCollections.find(query).toArray();
       res.send(result);
     });
-
   } finally {
   }
 }
