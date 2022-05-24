@@ -160,12 +160,19 @@ async function run() {
       res.send({ result, success: true, available: available });
     });
 
+    app.get('/admin/order/allorder', verifyJwt, async (req, res) => {
+      const query = {};
+      const result = await orderCollections.find(query).toArray();
+      res.send(result);
+    });
     app.get('/order/:email', verifyJwt, async (req, res) => {
       const email = req.params.email;
       const query = { email };
       const result = await orderCollections.find(query).toArray();
       res.send(result);
     });
+
+
 
     app.get('/order/payment/:id', verifyJwt, async (req, res) => {
       const id = req.params.id;
