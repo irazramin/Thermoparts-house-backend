@@ -198,6 +198,14 @@ async function run() {
       res.send(updateAvailableQuantity);
     });
 
+    app.delete('/admin/order/allorder/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const result = await orderCollections.deleteOne(filter);
+      res.send(result);
+    });
+
+
     app.delete('/order/payment/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
