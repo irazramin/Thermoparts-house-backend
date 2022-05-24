@@ -216,6 +216,20 @@ async function run() {
           res.send(result);
       })
 
+    app.put('/admin/order/allorder/shipment/:id', async(req,res) =>{
+      const id = req.params.id;
+      const confirmation = req.body;
+      const filter = {_id:ObjectId(id)};
+      const updateDoc = {
+        $set:{
+          shipment:true
+        }
+      }
+      const option = {upsert:true};
+      const result = await orderCollections.updateOne(filter,updateDoc,option);
+      res.send(result)
+    })
+
     app.delete('/order/payment/:id', async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
