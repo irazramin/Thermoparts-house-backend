@@ -186,20 +186,28 @@ async function run() {
     });
 
     
-    app.put('/admin/users/makeadmin/:id', async (req, res) => {
-      const id = req.params.id;
-      const filter = { _id: ObjectId(id) };
-      const option = { upsert: true };
-      const updateDoc = {
-        $set: {
-          role: 'admin',
-        },
-      };
-      const result = await userCollections.updateOne(filter, updateDoc, option);
-      res.send(result);
-    });
+    app.put(
+      '/admin/users/makeadmin/:id',
+      adminVerification,
+      async (req, res) => {
+        const id = req.params.id;
+        const filter = { _id: ObjectId(id) };
+        const option = { upsert: true };
+        const updateDoc = {
+          $set: {
+            role: 'admin',
+          },
+        };
+        const result = await userCollections.updateOne(
+          filter,
+          updateDoc,
+          option
+        );
+        res.send(result);
+      }
+    );
 
-      app.get('/admin/:email', async (req, res) => {
+      app.get('/admin/:email',adminVerification, async (req, res) => {
         const email = req.params.email;
         const query = { email };
         const result = await userCollections.findOne(query);
@@ -207,13 +215,13 @@ async function run() {
         res.send({ admin: isAdmin });
       });
 
-      app.get('/admin/users/details', verifyJwt, async (req, res) => {
+      app.get('/admin/users/details',adminVerification, verifyJwt, async (req, res) => {
         const query = {};
         const result = await userCollections.find(query).toArray();
         res.send(result);
       });
 
-      app.delete('/admin/product/allproduct/:id', async(req,res) =>{
+      app.delete('/admin/product/allproduct/:id',adminVerification, async(req,res) =>{
           const id = req.params.id;
           const filter = { _id: ObjectId(id) };
           const result = await toolCollections.deleteOne(filter);
@@ -222,7 +230,6 @@ async function run() {
 
     app.put('/admin/order/allorder/shipment/:id',adminVerification, async(req,res) =>{
       const id = req.params.id;
-      const confirmation = req.body;
       const filter = {_id:ObjectId(id)};
       const updateDoc = {
         $set:{
