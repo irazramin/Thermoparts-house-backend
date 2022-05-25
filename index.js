@@ -45,9 +45,9 @@ async function run() {
 
   try {
     const adminVerification = async (req, res, next) => {
-      const requesterEmail = req.decoded.email;
+      const adminRequestEmail = req.decoded.email;
       const requesterAccount = await userCollections.findOne({
-        email: requesterEmail,
+        email: adminRequestEmail,
       });
       if (requesterAccount.role === 'admin') {
         next();
@@ -110,7 +110,7 @@ async function run() {
         $set: user,
       };
       const result = await userCollections.updateOne(filter, updateDoc, option);
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN, {
+      const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN, {
         expiresIn: '2d',
       });
 
