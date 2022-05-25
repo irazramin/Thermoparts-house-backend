@@ -73,7 +73,7 @@ async function run() {
     app.get('/tools', async (req, res) => {
       const query = {};
       const result = await toolCollections.find(query).toArray();
-      res.send(result);
+      res.send(result.reverse());
     });
 
     app.post('/tools', async (req, res) => {
@@ -321,7 +321,7 @@ async function run() {
       );
       res.send(result);
     });
-    
+
 
     app.get('/userprofile/:email', async (req, res) => {
       const email = req.params.email;
