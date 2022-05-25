@@ -162,7 +162,7 @@ async function run() {
       res.send(updateAvailableQuantity);
     });
 
-    app.delete('/admin/order/allorder/:id', adminVerification, async (req, res) => {
+    app.delete('/admin/order/allorder/:id',  async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const result = await orderCollections.deleteOne(filter);
@@ -171,7 +171,7 @@ async function run() {
 
     app.get(
       '/admin/tools/allproducts',
-      adminVerification,verifyJwt,
+      verifyJwt,
       async (req, res) => {
         const query = {};
         const result = await toolCollections.find(query).toArray();
@@ -179,7 +179,7 @@ async function run() {
       }
     );
 
-    app.get('/admin/order/allorder',adminVerification, verifyJwt, async (req, res) => {
+    app.get('/admin/order/allorder', verifyJwt, async (req, res) => {
       const query = {};
       const result = await orderCollections.find(query).toArray();
       res.send(result);
@@ -188,7 +188,7 @@ async function run() {
     
     app.put(
       '/admin/users/makeadmin/:id',
-      adminVerification,
+      
       async (req, res) => {
         const id = req.params.id;
         const filter = { _id: ObjectId(id) };
@@ -207,7 +207,7 @@ async function run() {
       }
     );
 
-      app.get('/admin/:email',adminVerification, async (req, res) => {
+      app.get('/admin/:email', async (req, res) => {
         const email = req.params.email;
         const query = { email };
         const result = await userCollections.findOne(query);
@@ -215,20 +215,20 @@ async function run() {
         res.send({ admin: isAdmin });
       });
 
-      app.get('/admin/users/details',adminVerification, verifyJwt, async (req, res) => {
+      app.get('/admin/users/details', verifyJwt, async (req, res) => {
         const query = {};
         const result = await userCollections.find(query).toArray();
         res.send(result);
       });
 
-      app.delete('/admin/product/allproduct/:id',adminVerification, async(req,res) =>{
+      app.delete('/admin/product/allproduct/:id', async(req,res) =>{
           const id = req.params.id;
           const filter = { _id: ObjectId(id) };
           const result = await toolCollections.deleteOne(filter);
           res.send(result);
       })
 
-    app.put('/admin/order/allorder/shipment/:id',adminVerification, async(req,res) =>{
+    app.put('/admin/order/allorder/shipment/:id', async(req,res) =>{
       const id = req.params.id;
       const filter = {_id:ObjectId(id)};
       const updateDoc = {
