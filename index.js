@@ -179,7 +179,7 @@ async function run() {
       }
     );
 
-    app.get('/admin/order/allorder', verifyJwt, async (req, res) => {
+    app.get('/admin/order/allorder', adminVerification, verifyJwt, async (req, res) => {
       const query = {};
       const result = await orderCollections.find(query).toArray();
       res.send(result);
