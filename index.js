@@ -44,10 +44,10 @@ async function run() {
     .collection('userProfileCollection');
 
   try {
-    const verifyAdmin = async (req, res, next) => {
-      const requester = req.decoded.email;
+    const adminVerification = async (req, res, next) => {
+      const requesterEmail = req.decoded.email;
       const requesterAccount = await userCollections.findOne({
-        email: requester,
+        email: requesterEmail,
       });
       if (requesterAccount.role === 'admin') {
         next();
@@ -162,20 +162,24 @@ async function run() {
       res.send(updateAvailableQuantity);
     });
 
-    app.delete('/admin/order/allorder/:id', async (req, res) => {
+    app.delete('/admin/order/allorder/:id', adminVerification, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: ObjectId(id) };
       const result = await orderCollections.deleteOne(filter);
       res.send(result);
     });
 
-    app.get('/admin/tools/allproducts', verifyJwt, async (req, res) => {
-      const query = {};
-      const result = await toolCollections.find(query).toArray();
-      res.send(result);
-    });
+    app.get(
+      '/admin/tools/allproducts',
+      adminVerification,verifyJwt,
+      async (req, res) => {
+        const query = {};
+        const result = await toolCollections.find(query).toArray();
+        res.send(result);
+      }
+    );
 
-    app.get('/admin/order/allorder', verifyJwt, async (req, res) => {
+    app.get('/admin/order/allorder',adminVerification, verifyJwt, async (req, res) => {
       const query = {};
       const result = await orderCollections.find(query).toArray();
       res.send(result);
@@ -216,7 +220,7 @@ async function run() {
           res.send(result);
       })
 
-    app.put('/admin/order/allorder/shipment/:id', async(req,res) =>{
+    app.put('/admin/order/allorder/shipment/:id',adminVerification, async(req,res) =>{
       const id = req.params.id;
       const confirmation = req.body;
       const filter = {_id:ObjectId(id)};
