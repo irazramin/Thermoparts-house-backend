@@ -20,6 +20,7 @@ const client = new MongoClient(uri, {
 
 const verifyJwt = (req, res, next) => {
   const header = req.headers.authorization;
+  console.log(header)
   if (!header) {
     return res.status(401).send({ message: 'unauthorized' });
   }
@@ -188,7 +189,8 @@ async function run() {
     
     app.put(
       '/admin/users/makeadmin/:id',
-      
+      verifyJwt,
+      adminVerification,
       async (req, res) => {
         const id = req.params.id;
         const filter = { _id: ObjectId(id) };
